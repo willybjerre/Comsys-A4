@@ -47,93 +47,57 @@ struct Stat simulate(struct memory *mem, int start_addr,
             int32_t v2 = regs[rs2];
 
             switch (funct3) {
-            case 0x0: // ADD / SUB / MUL
+            case 0x0: // ADD / SUB 
                 if (funct7 == 0x00) {        // add
                     write_reg(regs, rd, v1 + v2);
                 } else if (funct7 == 0x20) { // sub
                     write_reg(regs, rd, v1 - v2);
-                } else if (funct7 == 0x01) { // mul
-                    write_reg(regs, rd, v1 * v2);
                 }
                 break;
 
-            case 0x1: // SLL / MULH
+            case 0x1: // SLL 
                 if (funct7 == 0x00) {        // sll
                     write_reg(regs, rd, v1 << (v2 & 0x1F));
-                } else if (funct7 == 0x01) { // mulh
-                    int64_t prod = (int64_t)v1 * (int64_t)v2;
-                    write_reg(regs, rd, (int32_t)(prod >> 32));
                 }
                 break;
 
-            case 0x2: // SLT / MULHSU
+            case 0x2: // SLT 
                 if (funct7 == 0x00) {        // slt
                     write_reg(regs, rd, (v1 < v2) ? 1 : 0);
-                } else if (funct7 == 0x01) { // mulhsu
-                    int64_t a = (int64_t)v1;
-                    uint64_t b = (uint32_t)v2;
-                    int64_t prod = a * (int64_t)b;
-                    write_reg(regs, rd, (int32_t)(prod >> 32));
-                }
+                } 
                 break;
 
-            case 0x3: // SLTU / MULHU
+            case 0x3: // SLTU
                 if (funct7 == 0x00) {        // sltu
                     write_reg(regs, rd,
                               ((uint32_t)v1 < (uint32_t)v2) ? 1 : 0);
-                } else if (funct7 == 0x01) { // mulhu
-                    uint64_t prod =
-                        (uint64_t)(uint32_t)v1 * (uint64_t)(uint32_t)v2;
-                    write_reg(regs, rd, (int32_t)(prod >> 32));
                 }
                 break;
 
-            case 0x4: // XOR / DIV
+            case 0x4: // XOR 
                 if (funct7 == 0x00) {        // xor
                     write_reg(regs, rd, v1 ^ v2);
-                } else if (funct7 == 0x01) { // div
-                    if (v2 == 0)
-                        write_reg(regs, rd, -1);
-                    else
-                        write_reg(regs, rd, v1 / v2);
-                }
+                } 
                 break;
 
-            case 0x5: // SRL / SRA / DIVU
+            case 0x5: // SRL / SRA
                 if (funct7 == 0x00) {        // srl
                     write_reg(regs, rd,
                               (int32_t)((uint32_t)v1 >> (v2 & 0x1F)));
                 } else if (funct7 == 0x20) { // sra
                     write_reg(regs, rd, v1 >> (v2 & 0x1F));
-                } else if (funct7 == 0x01) { // divu
-                    if ((uint32_t)v2 == 0)
-                        write_reg(regs, rd, -1);
-                    else
-                        write_reg(regs, rd,
-                                  (int32_t)((uint32_t)v1 / (uint32_t)v2));
                 }
                 break;
 
-            case 0x6: // OR / REM
+            case 0x6: // OR 
                 if (funct7 == 0x00) {        // or
                     write_reg(regs, rd, v1 | v2);
-                } else if (funct7 == 0x01) { // rem
-                    if (v2 == 0)
-                        write_reg(regs, rd, v1);
-                    else
-                        write_reg(regs, rd, v1 % v2);
                 }
                 break;
 
-            case 0x7: // AND / REMU
+            case 0x7: // AND 
                 if (funct7 == 0x00) {        // and
                     write_reg(regs, rd, v1 & v2);
-                } else if (funct7 == 0x01) { // remu
-                    if ((uint32_t)v2 == 0)
-                        write_reg(regs, rd, v1);
-                    else
-                        write_reg(regs, rd,
-                                  (int32_t)((uint32_t)v1 % (uint32_t)v2));
                 }
                 break;
             }
