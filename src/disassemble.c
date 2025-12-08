@@ -23,36 +23,26 @@ void disassemble(uint32_t addr, uint32_t instruction, char* result, size_t buf_s
                         snprintf(result, buf_size, "add x%d, x%d, x%d", rd, rs1, rs2);
                     else if (funct7 == 0x20)
                         snprintf(result, buf_size, "sub x%d, x%d, x%d", rd, rs1, rs2);
-                    else if (funct7 == 0x01)
-                        snprintf(result, buf_size, "mul x%d, x%d, x%d", rd, rs1, rs2);
                     break;
                 
                 case 0x1:
                     if (funct7 == 0x00)
                         snprintf(result, buf_size, "sll x%d, x%d, x%d", rd, rs1, rs2);     
-                    else if (funct7 == 0x01)
-                        snprintf(result, buf_size, "mulh x%d, x%d, x%d", rd, rs1, rs2);
                     break;
                 
                 case 0x2:
                     if (funct7 == 0x00)
                         snprintf(result, buf_size, "slt x%d, x%d, x%d", rd, rs1, rs2);
-                    else if (funct7 == 0x01)
-                        snprintf(result, buf_size, "mulhsu x%d, x%d, x%d", rd, rs1, rs2);
                     break;
                 
                 case 0x3:
                     if (funct7 == 0x00)
                         snprintf(result, buf_size, "sltu x%d, x%d, x%d", rd, rs1, rs2);
-                    else if (funct7 == 0x01)
-                        snprintf(result, buf_size, "mulhu x%d, x%d, x%d", rd, rs1, rs2);
                     break;
                 
                 case 0x4:
                     if (funct7 == 0x00)
                         snprintf(result, buf_size, "xor x%d, x%d, x%d", rd, rs1, rs2);
-                    else if (funct7 == 0x01)
-                        snprintf(result, buf_size, "div x%d, x%d, x%d", rd, rs1, rs2);
                     break;
                 
                 case 0x5:
@@ -60,22 +50,16 @@ void disassemble(uint32_t addr, uint32_t instruction, char* result, size_t buf_s
                         snprintf(result, buf_size, "srl x%d, x%d, x%d", rd, rs1, rs2);
                     else if (funct7 == 0x20)
                         snprintf(result, buf_size, "sra x%d, x%d, x%d", rd, rs1, rs2);
-                    else if (funct7 == 0x01)
-                        snprintf(result, buf_size, "divu x%d, x%d, x%d", rd, rs1, rs2);
                     break;
 
                 case 0x6:
                     if (funct7 == 0x00)
                         snprintf(result, buf_size, "or x%d, x%d, x%d", rd, rs1, rs2);
-                    else if (funct7 == 0x01)
-                        snprintf(result, buf_size, "rem x%d, x%d, x%d", rd, rs1, rs2);
                     break;
 
                 case 0x7:
                     if (funct7 == 0x00)
                         snprintf(result, buf_size, "and x%d, x%d, x%d", rd, rs1, rs2);
-                    else if (funct7 == 0x01)
-                        snprintf(result, buf_size, "remu x%d, x%d, x%d", rd, rs1, rs2);
                     break;
 
                 default:
