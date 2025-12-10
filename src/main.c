@@ -65,6 +65,35 @@ void disassemble_to_stdout(struct memory* mem, struct program_info* prog_info, s
   }
 }
 
+// Helper til at udskrive branch prediction stats
+static void print_branch_stats(FILE *out, const struct Stat *stats)
+{
+  // størrelserne skal matche dem, du bruger i simulate.c / simulate.h
+  int sizes[NUM_PRED_SIZES] = {256, 1024, 4096, 16384};
+
+  fprintf(out, "\nBranch prediction statistics:\n");
+
+  fprintf(out, "  NT:    preds=%llu  mispreds=%llu\n",
+          (unsigned long long)stats->nt.predictions,
+          (unsigned long long)stats->nt.mispredictions);
+
+  fprintf(out, "  BTFNT: preds=%llu  mispreds=%llu\n",
+          (unsigned long long)stats->btfnt.predictions,
+          (unsigned long long)stats->btfnt.mispredictions);
+
+  for (int i = 0; i < NUM_PRED_SIZES; i++) {
+    fprintf(out, "  Bimodal %5d: preds=%llu  mispreds=%llu\n",
+            sizes[i],
+            (unsigned long long)stats->bimodal[i].predictions,
+            (unsigned long long)stats->bimodal[i].mispredictions);
+
+    fprintf(out, "  gShare  %5d: preds=%llu  mispreds=%llu\n",
+            sizes[i],
+            (unsigned long long)stats->gshare[i].predictions,
+            (unsigned long long)stats->gshare[i].mispredictions);
+  }
+}
+
 int main(int argc, char *argv[])
 {
   struct memory *mem = memory_create();
@@ -120,12 +149,16 @@ int main(int argc, char *argv[])
     }
     if (log_file)
     {
-      fprintf(log_file, "\nSimulated %ld instructions in %d host ticks (%f MIPS)\n", num_insns, ticks, mips);
+      fprintf(log_file, "\nSimulated %ld instructions in %d host ticks (%f MIPS)\n",
+              num_insns, ticks, mips);
+      print_branch_stats(log_file, &stats);
       fclose(log_file);
     }
     else
     {
-      printf("\nSimulated %ld instructions in %d host ticks (%f MIPS)\n", num_insns, ticks, mips);
+      printf("\nSimulated %ld instructions in %d host ticks (%f MIPS)\n",
+             num_insns, ticks, mips);
+      print_branch_stats(stdout, &stats);
     }
     memory_delete(mem);
   }

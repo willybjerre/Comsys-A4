@@ -5,6 +5,46 @@
 #include "disassemble.h"
 #include "read_elf.h"   // for struct symbols
 
+// --- Branch predictor state (Del 2) ---
+
+// Tabelstørrelser til Bimodal og gShare (antal 2-bit tilstandsmaskiner)
+static const int predictor_sizes[NUM_PRED_SIZES] = {256, 1024, 4096, 16384};
+
+// 2-bit tilstandsmaskiner (vi bruger kun de nederste 2 bits)
+static uint8_t bimodal_tables[NUM_PRED_SIZES][16384];
+static uint8_t gshare_tables[NUM_PRED_SIZES][16384];
+
+// Global History Register til gShare
+static uint32_t ghr = 0;
+static const int ghr_bits = 14; // nok til 16K entries (2^14)
+
+// 2-bit counter: MSB bestemmer taget/ikke taget
+static inline int counter_predict(uint8_t c) {
+    // 00,01 -> 0 (ikke taget), 10,11 -> 1 (taget)
+    return (c >> 1) & 1;
+}
+
+static inline uint8_t counter_update(uint8_t c, int taken) {
+    if (taken) {
+        if (c < 3) c++;
+    } else {
+        if (c > 0) c--;
+    }
+    return c;
+}
+
+static void init_predictors(void) {
+    // Sæt alle counters til "svagt ikke taget" (01)
+    for (int i = 0; i < NUM_PRED_SIZES; i++) {
+        int size = predictor_sizes[i];
+        for (int j = 0; j < size; j++) {
+            bimodal_tables[i][j] = 1;
+            gshare_tables[i][j]  = 1;
+        }
+    }
+    ghr = 0;
+}
+
 // x0 må aldrig skrives til
 static inline void write_reg(int32_t regs[32], uint32_t rd, int32_t value) {
     if (rd != 0) regs[rd] = value;
@@ -14,6 +54,9 @@ struct Stat simulate(struct memory *mem, int start_addr,
                      FILE *log_file, struct symbols* symbols)
 {
     struct Stat stats = {0};
+
+    // init branch predictors for hver simulering
+    init_predictors();
 
     int32_t regs[32] = {0};       // x0..x31
     uint32_t pc = (uint32_t)start_addr;
@@ -259,6 +302,59 @@ struct Stat simulate(struct memory *mem, int start_addr,
             case 0x6: take = ((uint32_t)v1 <  (uint32_t)v2); break;   // bltu
             case 0x7: take = ((uint32_t)v1 >= (uint32_t)v2); break;   // bgeu
             }
+
+            // --- Branch prediction instrumentation (Del 2) ---
+            {
+                int actual_taken = take;
+                int is_backward = (imm < 0);
+
+                // Always Not Taken (NT)
+                stats.nt.predictions++;
+                if (actual_taken)
+                    stats.nt.mispredictions++;
+
+                // Backward Taken, Forward Not Taken (BTFNT)
+                int btfnt_pred = is_backward ? 1 : 0;
+                stats.btfnt.predictions++;
+                if (btfnt_pred != actual_taken)
+                    stats.btfnt.mispredictions++;
+
+                // Bimodal + gShare for alle 4 størrelser
+                uint32_t pc_index = pc >> 2;   // brug word-alignet PC
+                uint32_t ghr_mask = (1u << ghr_bits) - 1;
+                uint32_t ghr_local = ghr & ghr_mask;
+
+                for (int i = 0; i < NUM_PRED_SIZES; i++) {
+                    int size = predictor_sizes[i];
+                    int mask = size - 1;   // alle størrelser er 2-potens
+
+                    // ---- Bimodal ----
+                    int idx = pc_index & mask;
+                    uint8_t c = bimodal_tables[i][idx];
+                    int pred = counter_predict(c);
+
+                    stats.bimodal[i].predictions++;
+                    if (pred != actual_taken)
+                        stats.bimodal[i].mispredictions++;
+
+                    bimodal_tables[i][idx] = counter_update(c, actual_taken);
+
+                    // ---- gShare ----
+                    int gidx = (int)((pc_index ^ ghr_local) & mask);
+                    c = gshare_tables[i][gidx];
+                    pred = counter_predict(c);
+
+                    stats.gshare[i].predictions++;
+                    if (pred != actual_taken)
+                        stats.gshare[i].mispredictions++;
+
+                    gshare_tables[i][gidx] = counter_update(c, actual_taken);
+                }
+
+                // Opdater global history til gShare
+                ghr = ((ghr << 1) | (actual_taken ? 1u : 0u)) & ((1u << ghr_bits) - 1);
+            }
+            // --- slut på predictor-kode ---
 
             if (take) next_pc = target;
             break;
