@@ -55,7 +55,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
 {
     struct Stat stats = {0};
 
-    // init branch predictors
+    // init branch predictors for hver simulering
     init_predictors();
 
     int32_t regs[32] = {0};       // x0..x31
@@ -73,8 +73,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
         uint32_t funct7 = (inst >> 25) & 0x7F;
 
         uint32_t next_pc = pc + 4;
-
-
+        
         if (log_file) {
             char buf[128];
             disassemble(pc, inst, buf, sizeof buf, symbols);
@@ -84,7 +83,8 @@ struct Stat simulate(struct memory *mem, int start_addr,
 
         switch (opcode) {
 
-        // R-type (RV32I + RV32M)
+        //R-type (RV32I + RV32M)
+        case 0x33: {
             int32_t v1 = regs[rs1];
             int32_t v2 = regs[rs2];
 
