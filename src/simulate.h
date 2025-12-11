@@ -6,7 +6,7 @@
 #include "read_elf.h"
 #include <stdio.h>
 
-// Simuler RISC-V program i givet lager og fra given start adresse
+// Simulerer RISC-V programmet i givet lager og fra given start adresse
 
 struct PredictorStat {
     unsigned long long predictions;

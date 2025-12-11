@@ -5,18 +5,17 @@
 #include "disassemble.h"
 #include "read_elf.h"   // for struct symbols
 
-// --- Branch predictor state (Del 2) ---
 
-// Tabelstørrelser til Bimodal og gShare (antal 2-bit tilstandsmaskiner)
+// Tabelstørrelser til Bimodal og gShare
 static const int predictor_sizes[NUM_PRED_SIZES] = {256, 1024, 4096, 16384};
 
-// 2-bit tilstandsmaskiner (vi bruger kun de nederste 2 bits)
+// 2-bit tilstandsmaskiner 
 static uint8_t bimodal_tables[NUM_PRED_SIZES][16384];
 static uint8_t gshare_tables[NUM_PRED_SIZES][16384];
 
 // Global History Register til gShare
 static uint32_t ghr = 0;
-static const int ghr_bits = 14; // nok til 16K entries (2^14)
+static const int ghr_bits = 14; 
 
 // 2-bit counter: MSB bestemmer taget/ikke taget
 static inline int counter_predict(uint8_t c) {
@@ -34,7 +33,7 @@ static inline uint8_t counter_update(uint8_t c, int taken) {
 }
 
 static void init_predictors(void) {
-    // Sæt alle counters til "svagt ikke taget" (01)
+    // Sætter alle counters til "svagt ikke taget" 
     for (int i = 0; i < NUM_PRED_SIZES; i++) {
         int size = predictor_sizes[i];
         for (int j = 0; j < size; j++) {
@@ -302,7 +301,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
             case 0x7: take = ((uint32_t)v1 >= (uint32_t)v2); break;   // bgeu
             }
 
-            // --- Branch prediction instrumentation (Del 2) ---
+            // Branch prediction instrumentation 
             {
                 int actual_taken = take;
                 int is_backward = (imm < 0);
@@ -319,15 +318,15 @@ struct Stat simulate(struct memory *mem, int start_addr,
                     stats.btfnt.mispredictions++;
 
                 // Bimodal + gShare for alle 4 størrelser
-                uint32_t pc_index = pc >> 2;   // brug word-alignet PC
+                uint32_t pc_index = pc >> 2;   
                 uint32_t ghr_mask = (1u << ghr_bits) - 1;
                 uint32_t ghr_local = ghr & ghr_mask;
 
                 for (int i = 0; i < NUM_PRED_SIZES; i++) {
                     int size = predictor_sizes[i];
-                    int mask = size - 1;   // alle størrelser er 2-potens
+                    int mask = size - 1;  
 
-                    // ---- Bimodal ----
+                    // Bimodal
                     int idx = pc_index & mask;
                     uint8_t c = bimodal_tables[i][idx];
                     int pred = counter_predict(c);
@@ -338,7 +337,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
 
                     bimodal_tables[i][idx] = counter_update(c, actual_taken);
 
-                    // ---- gShare ----
+                    // gShare 
                     int gidx = (int)((pc_index ^ ghr_local) & mask);
                     c = gshare_tables[i][gidx];
                     pred = counter_predict(c);
@@ -350,7 +349,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
                     gshare_tables[i][gidx] = counter_update(c, actual_taken);
                 }
 
-                // Opdater global history til gShare
+                // Opdaterer global history til gShare
                 ghr = ((ghr << 1) | (actual_taken ? 1u : 0u)) & ((1u << ghr_bits) - 1);
             }
            

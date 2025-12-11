@@ -68,7 +68,6 @@ void disassemble_to_stdout(struct memory* mem, struct program_info* prog_info, s
 // Helper til at udskrive branch prediction stats
 static void print_branch_stats(FILE *out, const struct Stat *stats)
 {
-  // størrelserne skal matche dem, du bruger i simulate.c / simulate.h
   int sizes[NUM_PRED_SIZES] = {256, 1024, 4096, 16384};
 
   fprintf(out, "\nBranch prediction statistics:\n");
