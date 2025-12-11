@@ -205,7 +205,7 @@ void disassemble(uint32_t addr, uint32_t instruction, char* result, size_t buf_s
             break;
         }
         case 0x17: { // U-type AUIPC
-            int32_t imm = instruction & 0xFFFFF000; // øverste 20 bits
+            int32_t imm = instruction & 0xFFFFF000; // største 20 bits
             snprintf(result, buf_size, "auipc x%d, %d", rd, imm);
             break;
         }
@@ -216,11 +216,11 @@ void disassemble(uint32_t addr, uint32_t instruction, char* result, size_t buf_s
         }
         case 0x6F: { // J-type
             int32_t imm = 0;
-            imm |= (instruction & 0xFF000);          // bits 19:12 -> imm[19:12]
+            imm |= (instruction & 0xFF000);          // bits 19:12 -> imm[19:12
             imm |= (instruction >> 9) & 0x800;       // bit 20  -> imm[11]
             imm |= (instruction >> 20) & 0x7FE;      // bits 30:21 -> imm[10:1]
             imm |= (instruction >> 11) & 0x100000;   // bit 31 -> imm[20]
-            if (imm & 0x100000) imm |= 0xFFE00000;   // sign-extend 21-bit
+            if (imm & 0x100000) imm |= 0xFFE00000;   // sign-extend 21-bi
 
 
             uint32_t target = addr + imm;

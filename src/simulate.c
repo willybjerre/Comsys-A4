@@ -55,7 +55,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
 {
     struct Stat stats = {0};
 
-    // init branch predictors for hver simulering
+    // init branch predictors
     init_predictors();
 
     int32_t regs[32] = {0};       // x0..x31
@@ -74,7 +74,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
 
         uint32_t next_pc = pc + 4;
 
-        // Evt. log: disassembler instruktionen og skriv én linje
+
         if (log_file) {
             char buf[128];
             disassemble(pc, inst, buf, sizeof buf, symbols);
@@ -84,8 +84,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
 
         switch (opcode) {
 
-        // ---------------- R-type (RV32I + RV32M) ----------------
-        case 0x33: {
+        // R-type (RV32I + RV32M)
             int32_t v1 = regs[rs1];
             int32_t v2 = regs[rs2];
 
@@ -183,7 +182,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
             break;
         }
 
-        // ---------------- LOADS (I-type, opcode 0x03) --------
+        // LOADS (I-type, opcode 0x03)
         case 0x03: {
             int32_t imm = (int32_t)inst >> 20;
             uint32_t addr = (uint32_t)(regs[rs1] + imm);
@@ -218,7 +217,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
             break;
         }
 
-        // ---------------- I-type ALU/SHIFTS (0x13) -----------
+        //  I-type ALU/SHIFTS (0x13)
         case 0x13: {
             int32_t imm = (int32_t)inst >> 20;
             uint32_t shamt = (inst >> 20) & 0x1F;
@@ -260,7 +259,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
             break;
         }
 
-        // ---------------- STORES (S-type, 0x23) -------------
+        //  STORES (S-type, 0x23) 
         case 0x23: {
             int32_t imm = ((inst >> 7) & 0x1F) | ((inst >> 25) << 5);
             if (imm & 0x800) imm |= 0xFFFFF000;
@@ -281,7 +280,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
             break;
         }
 
-        // ---------------- BRANCHES (B-type, 0x63) -----------
+        //  BRANCHES (B-type, 0x63)
         case 0x63: {
             int32_t imm = 0;
             imm |= (inst >> 7) & 0x1E;          // imm[4:1]
@@ -354,13 +353,13 @@ struct Stat simulate(struct memory *mem, int start_addr,
                 // Opdater global history til gShare
                 ghr = ((ghr << 1) | (actual_taken ? 1u : 0u)) & ((1u << ghr_bits) - 1);
             }
-            // --- slut på predictor-kode ---
+           
 
             if (take) next_pc = target;
             break;
         }
 
-        // ---------------- AUIPC / LUI -----------------------
+        //  AUIPC / LUI
         case 0x17: { // auipc
             int32_t imm = (int32_t)(inst & 0xFFFFF000);
             write_reg(regs, rd, pc + imm);
@@ -372,7 +371,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
             break;
         }
 
-        // ---------------- JAL / JALR ------------------------
+        //  JAL / JALR
         case 0x6F: { // jal
             int32_t imm = 0;
             imm |= (inst & 0xFF000);            // 19:12
@@ -394,7 +393,7 @@ struct Stat simulate(struct memory *mem, int start_addr,
             break;
         }
 
-        // ---------------- SYSTEM / ECALL --------------------
+        // SYSTEM / ECALL 
         case 0x73: {
             if (inst == 0x00000073) { // ecall
                 int32_t a7 = regs[17]; // syscall nr
